@@ -15,12 +15,22 @@ public class ThreePhilosophersProblem {
      *   As long as Jordathan and Andreas both compete for the lock A as prio
      *   there is no issue. Both Layla and Andreas wants C, but then its simply
      *   first come, first served.
+     *
+     *   Another issue if you three chopsticks is that in this case
+     *   layla is the only one competing heavily for chopstick B
+     *   To average this, you would perhaps want all of them to compete for the same sticks
+     *    However, if you have a ton of threads, you might starve some threads.
+     *    If those are requests, youd want all ot process.
+     *    This workload mangament not covered in this course
      */
 
     public ThreePhilosophersProblem(){
         new Philosopher("Jordathan",chopStickA, chopStickB).start();
-        new Philosopher("Layla",chopStickB,chopStickC).start();
-        new Philosopher("Andreas",chopStickA, chopStickC).start();
+        new Philosopher("Layla",chopStickA,chopStickB).start();
+        new Philosopher("Andreas",chopStickA, chopStickB).start();
+     //  new Philosopher("Jordathan",chopStickA, chopStickB).start();
+     //   new Philosopher("Layla",chopStickB,chopStickC).start();
+     //   new Philosopher("Andreas",chopStickA, chopStickC).start();
     }
 }
 
@@ -37,23 +47,32 @@ public class ThreePhilosophersProblem {
 
     @Override
     public void run(){
-        while(sushiCount > 0){
-            prioChopStick.lock();
-            secPrioChopStick.lock();
 
+
+        int sushiEaten = 0;
+
+        while(sushiCount > 0) {
+            prioChopStick.lock();
+            if (!secPrioChopStick.tryLock()) {
+                System.out.println(this.getName() + " Released its lock as there was a deadlock!");
+                prioChopStick.unlock();
+            }else {
+                secPrioChopStick.lock();
             //In case of exception
             //The thread will always release even if terminating abruptly!
             try {
                 if (sushiCount > 0) {
                     sushiCount--;
-                    System.out.println(this.getName() + " took a sushi" + ", sushi remaining: " + sushiCount);
+                    sushiEaten++;
+                 //   System.out.println(this.getName() + " took a sushi" + ", sushi remaining: " + sushiCount);
                 }
             }finally {
                 secPrioChopStick.unlock();
                 prioChopStick.unlock();
             }
+         }
         }
-
+        System.out.println(this.getName() + " got to eat" + sushiEaten + " pieces");
     }
 
 }
